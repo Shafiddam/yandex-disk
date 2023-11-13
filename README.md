@@ -1,1 +1,1 @@
-Тесты yandex-disk
+Тесты UI & API yandex-disk
