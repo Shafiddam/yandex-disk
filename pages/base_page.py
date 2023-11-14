@@ -23,7 +23,7 @@ class BasePage:
         BTN_ENTER_TO_YANDEX = (By.ID, 'passp:sign-in')
         BTN_USER_ACCOUNT = (By.CSS_SELECTOR, '.PSHeader-User.PSHeader-User_noUserName.promozavr-anchor-user')
         BTN_USER_ACCOUNT_LOGOUT = (By.CSS_SELECTOR,
-                            '.menu__item menu__item_type_link.legouser__menu-item.legouser__menu-item_action_exit')
+                            '.menu__item.menu__item_type_link.legouser__menu-item.legouser__menu-item_action_exit')
         INPUT_FIELD_PASSWORD = (By.ID, 'passp-field-passwd')
         BTN_CREATE = (By.CSS_SELECTOR, '.Button2.Button2_view_raised.Button2_size_m.Button2_width_max')
         BTN_CREATE_FOLDER = (By.XPATH, '//*[contains(@class,"create-resource-button__text")][text()="Папку"]')
@@ -64,10 +64,8 @@ class BasePage:
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_CREATE)).click()
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_CREATE_FOLDER)).click()
         element = self.wait.until(EC.visibility_of_element_located(self.Locators.INPUT_NAME_FOLDER))
-        # element.click()
-        # sleep(3)
         element.clear()
-        # sleep(3)
+        sleep(3)
         element.send_keys(name_folder)
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_SAVE)).click()
 
