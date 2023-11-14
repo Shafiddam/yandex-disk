@@ -5,7 +5,7 @@ from pages.base_page import BasePage
 
 
 def test_yandex_disk(browser):
-    """ Перед выполнением теста нужно выключить VPN (если он включен). В тесте нет проверки на "робота"! """
+    """ Перед выполнением теста лучше выключить VPN (если он включен). В тесте нет проверки на "робота"! """
 
     base_page = BasePage(browser)
     login = 'enot-2023'
