@@ -1,3 +1,5 @@
+from time import sleep
+
 from conftest import *
 from pages.base_page import BasePage
 
@@ -21,8 +23,9 @@ def test_yandex_disk(browser):
         base_page.close_created_file(name_text_file)
         element = base_page.check_created_file(name_text_file)
         assert element, "Ошибка: файл не был создан!"
-        assert element.get_attribute(
-            "aria-label") == f"{name_text_file}.docx", "Ошибка: название файла не соответствует ожидаемому!"
+        assert (element.get_attribute("aria-label") == f"{name_text_file}.docx"), \
+            "Ошибка: название файла не соответствует ожидаемому!"
+        sleep(3)
         base_page.logout()
 
     except Exception as e:
