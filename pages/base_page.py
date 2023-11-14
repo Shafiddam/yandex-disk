@@ -5,6 +5,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
+import pyautogui
+from datetime import datetime
 
 
 
@@ -22,10 +24,14 @@ class BasePage:
                               'contains(@class, "WithIcon_1t2UrWHXuaDRpdFz2evI-t")]')
         BTN_ENTER_TO_YANDEX = (By.ID, 'passp:sign-in')
         BTN_USER_ACCOUNT = (By.CSS_SELECTOR, '.PSHeader-User.PSHeader-User_noUserName.promozavr-anchor-user')
+        BTN_UPLOAD_BUTTON = (By.CSS_SELECTOR, '.upload-button__attach-wrapper')
+        UPLOADER_PROGRESS = (By.XPATH, '//h3[@class="uploader-progress__progress-primary"][text()="Все файлы загружены"]')
+        BTN_UPLOADER_CLOSE = (By.CSS_SELECTOR, '.uploader-progress__close-button')
         BTN_USER_ACCOUNT_LOGOUT = (By.CSS_SELECTOR,
                             '.menu__item.menu__item_type_link.legouser__menu-item.legouser__menu-item_action_exit')
         INPUT_FIELD_PASSWORD = (By.ID, 'passp-field-passwd')
         BTN_CREATE = (By.CSS_SELECTOR, '.Button2.Button2_view_raised.Button2_size_m.Button2_width_max')
+        BTN_ACTION_BAR_CLOSE = (By.CSS_SELECTOR, '.resources-action-bar__close')
         BTN_CREATE_FOLDER = (By.XPATH, '//*[contains(@class,"create-resource-button__text")][text()="Папку"]')
         BTN_CREATE_TEXT_FILE = (By.XPATH, '//*[contains(@class,"create-resource-button__text")]'
                                           '[text()="Текстовый документ"]')
@@ -46,6 +52,12 @@ class BasePage:
     def open(self):
         self.driver.get(self.Locators.BASE_URL)
 
+    def generate_unique_folder_name(self, prefix="Folder"):
+        # Генерируем уникальное имя с использованием текущего времени
+        timestamp = datetime.now().strftime("%H%M%S")
+        folder_name = f"{prefix}_{timestamp}"
+        return folder_name
+
     def go_to_disk(self):
         self.wait.until(EC.visibility_of_element_located(self.Locators.BUTTON_DISK)).click()
         self.driver.switch_to.window(self.driver.window_handles[-1])
@@ -62,6 +74,7 @@ class BasePage:
 
     def create_folder(self, name_folder):
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_CREATE)).click()
+        sleep(2)
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_CREATE_FOLDER)).click()
         element = self.wait.until(EC.visibility_of_element_located(self.Locators.INPUT_NAME_FOLDER))
         element.clear()
@@ -88,8 +101,19 @@ class BasePage:
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[-1])  # Переключаемся обратно на предыдущую вкладку
 
+    # def close_uploaded_file(self, name_text_file):
+    def close_uploaded_file(self, name_text_file):
+        # Локатор заголовка новой вкладки
+        new_tab_title_locator = (By.XPATH, f'//title[contains(text(), "{name_text_file}")]')
+        self.driver.switch_to.window(self.driver.window_handles[-1])   # Переключаемся на новую вкладку
+        # Дожидаемся загрузки заголовка новой вкладки
+        self.wait.until(EC.presence_of_element_located(new_tab_title_locator))
+        # sleep(10)
+        self.driver.close()
+        self.driver.switch_to.window(self.driver.window_handles[-1])  # Переключаемся обратно на предыдущую вкладку
+        self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_ACTION_BAR_CLOSE)).click()
+
     def check_created_file(self, name_text_file):
-        # locator_created_file = (By.XPATH, f'//div[@class="listing-item" and .//@aria-label="{name_text_file}.docx"]')
         locator_created_file = (By.XPATH, f'//div[contains(@class, "listing-item__title") '
                                           f'and @aria-label="{name_text_file}.docx"]')
         try:
@@ -97,6 +121,11 @@ class BasePage:
         except TimeoutException:
             return None
 
+    def check_text_uploaded_file(self):
+        locator = (By.XPATH, '//p[@class="mg1"]')
+        element = self.wait.until(EC.presence_of_element_located(locator))
+        uploaded_text = element.text
+        return uploaded_text
 
     def find_and_open_folder(self, name_folder):
         locator_created_folder = (By.XPATH, f'//div[contains(@class, "listing-item_theme_tile") '
@@ -106,6 +135,13 @@ class BasePage:
         actions.double_click(created_folder_element).perform()
         sleep(2)
 
+    def find_and_open_file(self, name_text_file):
+        locator_created_file = (By.XPATH, f'//div[contains(@class, "listing-item_theme_tile") '
+                                            f'and .//span[@class="clamped-text" and text()="{name_text_file}"]]')
+        actions = ActionChains(self.driver)
+        created_file_element = self.wait.until(EC.visibility_of_element_located(locator_created_file))
+        actions.double_click(created_file_element).perform()
+        sleep(2)
 
     def login_to_yandex(self, login, password):
         self.wait.until(EC.visibility_of_element_located(self.Locators.INPUT_FIELD)).send_keys(login)
@@ -117,4 +153,19 @@ class BasePage:
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_USER_ACCOUNT)).click()
         sleep(2)
         self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_USER_ACCOUNT_LOGOUT)).click()
+
+    def read_text_from_file(self, file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return file.read()
+
+    def upload_file_txt(self, path):
+        self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_UPLOAD_BUTTON)).click()
+        sleep(5)  # модуль ввода очень нестабилен поэтому ждем
+        pyautogui.write(path, interval=0.1)
+        sleep(3)
+        pyautogui.press('enter')
+        sleep(3)
+        # удостоверимся что файл загружен:
+        self.wait.until(EC.visibility_of_element_located(self.Locators.UPLOADER_PROGRESS))
+        self.wait.until(EC.visibility_of_element_located(self.Locators.BTN_UPLOADER_CLOSE)).click()
 
